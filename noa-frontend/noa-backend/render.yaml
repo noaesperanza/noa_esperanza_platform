@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: noaesperanza-backend
+    env: python
+    buildCommand: "cd backend && pip install -r requirements.txt"
+    startCommand: "cd backend && uvicorn main:app --host 0.0.0.0 --port 10000"
+    envVars:
+      - key: PG_DB
+        value: oauth-para-noa-esperanza
+      - key: PG_USER
+        value: postgres
+      - key: PG_PASSWORD
+        sync: false
+      - key: PG_HOST
+        value: localhost
+      - key: PG_PORT
+        value: "5432"
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: GPT_AVALIACAO_MODEL
+        sync: false
+      - key: GPT_ONBOARDING_ASSISTANT_ID
+        sync: false
