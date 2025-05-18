@@ -1,24 +1,109 @@
+# ---------------------
+# 🔧 PYTHON / FASTAPI
+# ---------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.env
+*.sqlite3
+*.db
+*.egg-info/
+*.so
+*.bak
+*.tmp
+
+# Virtual env
+venv/
+.env
+.env.*
+.envrc
+*.env.local
+
+# VSCode settings
+.vscode/
+
+# Testes
+coverage/
+htmlcov/
+.tox/
+pytest_cache/
+*.test.py
+*.coverage
+
 # Logs
-logs
+logs/
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+# ---------------------
+# ⚛️ NODE / FRONTEND (React + Vite + TS)
+# ---------------------
+node_modules/
+dist/
+build/
+.vite/
+.cache/
+.nyc_output/
+coverage/
+*.tsbuildinfo
+
+# Arquivos lock
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Arquivos de build estáticos e temporários
 *.local
+*.env.local
+*.env.development
+*.env.production
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# Testes e snapshots
+__snapshots__/
+*.test.js
+*.test.ts
+*.spec.ts
+*.spec.js
+
+# ---------------------
+# 🧠 NOTEBOOKS / MODELOS
+# ---------------------
+*.ipynb_checkpoints/
+*.ipynb
+
+# ---------------------
+# 💻 SISTEMA OPERACIONAL / IDEs
+# ---------------------
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+Thumbs.db
+ehthumbs.db
+*.swp
+*.swo
+.idea/
+*.iml
+
+# ---------------------
+# 🧳 DEPLOY / VERCEL / CONFIGS
+# ---------------------
+.vercel/
+.vercel_build_output/
+output/
+now.json
+
+# ---------------------
+# 📦 ARQUIVOS COMPACTADOS
+# ---------------------
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# ---------------------
+# 🚫 OUTROS: backup, temporários, traços de editores
+# ---------------------
+*.bak
+*.tmp
+*.orig
+*.old
+*.tmp.*
+*~ 
