@@ -3,7 +3,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from pydantic import BaseModel
 from datetime import datetime
-import openai
 import psycopg2
 import os
 from dotenv import load_dotenv
@@ -19,7 +18,7 @@ app = FastAPI()
 # === Middleware CORS ===
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Em produção: restringir domínios
+    allow_origins=["*"],  # Em produção, especifique domínios confiáveis
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -31,21 +30,12 @@ DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_HOST = os.getenv("DB_HOST")
 DB_PORT = os.getenv("DB_PORT")
-GPT_MODEL = os.getenv("GPT_AVALIACAO_MODEL")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-
-# === Validação da Chave da OpenAI ===
-if not OPENAI_API_KEY:
-    logging.error("❌ OPENAI_API_KEY não está definida no .env!")
-else:
-    logging.info("✅ Chave OpenAI carregada com sucesso.")
-    openai.api_key = OPENAI_API_KEY
 
 # === Importação dos Routers ===
 from logs import router as logs_router
 from documentos import router as documentos_router
 from kpis import router as kpi_router
-from chat import router as chat_router
+from chat import router as chat_router  # ⚠️ Conexão simbólica com Builder
 from logs import salvar_log  # função de rastreabilidade
 
 # === Criação de Tabelas no PostgreSQL ===
@@ -110,7 +100,7 @@ def criar_tabelas():
     except Exception as e:
         logging.error(f"❌ Erro ao conectar e criar tabelas no PostgreSQL: {e}")
 
-# === Customização do OpenAPI para Swagger ===
+# === Customização da documentação Swagger ===
 def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
@@ -121,15 +111,15 @@ def custom_openapi():
         routes=app.routes,
     )
     openapi_schema["servers"] = [
-        {"url": "https://plataforma-noa-backend.onrender.com"}  # ✅ URL externa correta
+        {"url": "https://plataforma-noa-backend.onrender.com"}
     ]
     app.openapi_schema = openapi_schema
     return app.openapi_schema
 
 app.openapi = custom_openapi
 
-# === Registro dos Routers ===
+# === Registro das Rotas ===
 app.include_router(logs_router)
 app.include_router(documentos_router)
 app.include_router(kpi_router)
-app.include_router(chat_router)  # ✅ Rota para GPT
+app.include_router(chat_router)
