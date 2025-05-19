@@ -18,7 +18,7 @@ app = FastAPI()
 # === Middleware CORS ===
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Em produção, especifique domínios confiáveis
+    allow_origins=["*"],  # Em produção, restringir domínios específicos
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -35,8 +35,8 @@ DB_PORT = os.getenv("DB_PORT")
 from logs import router as logs_router
 from documentos import router as documentos_router
 from kpis import router as kpi_router
-from chat import router as chat_router  # ⚠️ Conexão simbólica com Builder
-from logs import salvar_log  # função de rastreabilidade
+from chat import router as chat_router
+from logs import salvar_log  # Para rastreamento
 
 # === Criação de Tabelas no PostgreSQL ===
 @app.on_event("startup")
@@ -58,7 +58,7 @@ def criar_tabelas():
                 user_id TEXT NOT NULL,
                 mensagem TEXT,
                 resposta TEXT,
-                criado_em TIMESTAMP
+                criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         """)
 
@@ -70,7 +70,7 @@ def criar_tabelas():
                 mensagem TEXT,
                 resposta TEXT,
                 status_code INT,
-                criado_em TIMESTAMP
+                criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         """)
 
@@ -89,7 +89,7 @@ def criar_tabelas():
                 user_id TEXT NOT NULL,
                 titulo TEXT,
                 caminho TEXT,
-                criado_em TIMESTAMP
+                criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         """)
 
@@ -107,19 +107,19 @@ def custom_openapi():
     openapi_schema = get_openapi(
         title="Nôa Esperanza API",
         version="1.0.0",
-        description="API pública da Nôa Esperanza para integração GPT.",
+        description="API pública da Nôa Esperanza para integração com GPT Builder.",
         routes=app.routes,
     )
     openapi_schema["servers"] = [
-        {"url": "https://plataforma-noa-backend.onrender.com"}
+        {"url": "https://plataforma-noa-backend.onrender.com"}  # 🔗 URL do Render para Swagger
     ]
     app.openapi_schema = openapi_schema
     return app.openapi_schema
 
 app.openapi = custom_openapi
 
-# === Registro das Rotas ===
+# === Registro dos Routers ===
 app.include_router(logs_router)
 app.include_router(documentos_router)
 app.include_router(kpi_router)
-app.include_router(chat_router)
+app.include_router(chat_router)  # ✅ Chat conectado ao GPT Builder
