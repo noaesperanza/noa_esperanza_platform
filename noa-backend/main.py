@@ -7,99 +7,110 @@ import openai
 import psycopg2
 import os
 from dotenv import load_dotenv
+import logging
 
-# Importação dos routers
-from logs import router as logs_router
-from documentos import router as documentos_router
-from kpis import router as kpi_router
-from chat import router as chat_router  # Adiciona o router de /api/chat
-from logs import salvar_log  # Função para salvar os logs GPT
-
-# Carrega variáveis do .env
+# === Configuração Inicial ===
 load_dotenv()
+logging.basicConfig(level=logging.INFO)
 
-# Inicializa o app
+# === Inicializa o app FastAPI ===
 app = FastAPI()
 
-# Middleware CORS
+# === Middleware CORS ===
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # Em produção: restringir domínios
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Variáveis de ambiente (validadas)
+# === Variáveis de ambiente ===
 DB_NAME = os.getenv("DB_NAME")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_HOST = os.getenv("DB_HOST")
 DB_PORT = os.getenv("DB_PORT")
-GPT_MODEL = os.getenv("GPT_AVALIACAO_MODEL")  # Pode ser ajustado no backend
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")  # ⚠️ Apontando corretamente
+GPT_MODEL = os.getenv("GPT_AVALIACAO_MODEL")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-openai.api_key = OPENAI_API_KEY
+# === Validação da Chave da OpenAI ===
+if not OPENAI_API_KEY:
+    logging.error("❌ OPENAI_API_KEY não está definida no .env!")
+else:
+    logging.info("✅ Chave OpenAI carregada com sucesso.")
+    openai.api_key = OPENAI_API_KEY
 
-# Criação de tabelas ao iniciar o app
+# === Importação dos Routers ===
+from logs import router as logs_router
+from documentos import router as documentos_router
+from kpis import router as kpi_router
+from chat import router as chat_router
+from logs import salvar_log  # função de rastreabilidade
+
+# === Criação de Tabelas no PostgreSQL ===
 @app.on_event("startup")
 def criar_tabelas():
-    conn = psycopg2.connect(
-        dbname=DB_NAME,
-        user=DB_USER,
-        password=DB_PASSWORD,
-        host=DB_HOST,
-        port=DB_PORT,
-        options='-c client_encoding=UTF8'
-    )
-    cur = conn.cursor()
+    try:
+        conn = psycopg2.connect(
+            dbname=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            host=DB_HOST,
+            port=DB_PORT,
+            options='-c client_encoding=UTF8'
+        )
+        cur = conn.cursor()
 
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS public.conversas_noa (
-            id SERIAL PRIMARY KEY,
-            user_id TEXT NOT NULL,
-            mensagem TEXT,
-            resposta TEXT,
-            criado_em TIMESTAMP
-        );
-    """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS public.conversas_noa (
+                id SERIAL PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                mensagem TEXT,
+                resposta TEXT,
+                criado_em TIMESTAMP
+            );
+        """)
 
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS public.logs_gpt (
-            id SERIAL PRIMARY KEY,
-            endpoint TEXT,
-            user_id TEXT,
-            mensagem TEXT,
-            resposta TEXT,
-            status_code INT,
-            criado_em TIMESTAMP
-        );
-    """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS public.logs_gpt (
+                id SERIAL PRIMARY KEY,
+                endpoint TEXT,
+                user_id TEXT,
+                mensagem TEXT,
+                resposta TEXT,
+                status_code INT,
+                criado_em TIMESTAMP
+            );
+        """)
 
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS public.kpi_simulacoes (
-            id_simulacao SERIAL PRIMARY KEY,
-            tempo_resposta FLOAT,
-            coerencia FLOAT,
-            ritmo FLOAT
-        );
-    """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS public.kpi_simulacoes (
+                id_simulacao SERIAL PRIMARY KEY,
+                tempo_resposta FLOAT,
+                coerencia FLOAT,
+                ritmo FLOAT
+            );
+        """)
 
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS public.documentos_testes (
-            id UUID PRIMARY KEY,
-            user_id TEXT NOT NULL,
-            titulo TEXT,
-            caminho TEXT,
-            criado_em TIMESTAMP
-        );
-    """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS public.documentos_testes (
+                id UUID PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                titulo TEXT,
+                caminho TEXT,
+                criado_em TIMESTAMP
+            );
+        """)
 
-    conn.commit()
-    cur.close()
-    conn.close()
+        conn.commit()
+        cur.close()
+        conn.close()
+        logging.info("✅ Tabelas verificadas/criadas com sucesso.")
+    except Exception as e:
+        logging.error(f"❌ Erro ao conectar e criar tabelas no PostgreSQL: {e}")
 
-# Personalização da documentação para apontar para o domínio da API no Render
+# === Customização do OpenAPI para Swagger ===
 def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
@@ -110,16 +121,15 @@ def custom_openapi():
         routes=app.routes,
     )
     openapi_schema["servers"] = [
-        {"url": "https://plataforma-noa-backend.onrender.com"}  # Dominio final da API
+        {"url": "https://plataforma-noa-backend.onrender.com"}  # ✅ URL externa correta
     ]
     app.openapi_schema = openapi_schema
     return app.openapi_schema
 
 app.openapi = custom_openapi
 
-# Inclui todos os routers
+# === Registro dos Routers ===
 app.include_router(logs_router)
 app.include_router(documentos_router)
 app.include_router(kpi_router)
-app.include_router(chat_router)  # Rota de /api/chat para vc (builder)
-
+app.include_router(chat_router)  # ✅ Rota para GPT
