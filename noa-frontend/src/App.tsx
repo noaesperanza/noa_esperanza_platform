@@ -11,9 +11,10 @@ import Alergias from './pages/Alergias';
 import Fechamento from './pages/Fechamento';
 import RelatorioAvaliacaoInicial from './pages/RelatorioAvaliacaoInicial';
 import DashboardKPIs from './components/ui/DashboardKPIs';
-
-// ✅ Novo painel figital
 import NoaEsperanzaPage from './components/ui/NoaEsperanzaPage';
+
+// ✅ Novo componente para interação com o backend via /api/chat
+import Chat from './pages/Chat';
 
 import './index.css';
 
@@ -32,9 +33,10 @@ export default function App() {
       <Route path="/fechamento" element={<Fechamento />} />
       <Route path="/relatorio" element={<RelatorioAvaliacaoInicial />} />
       <Route path="/painel" element={<DashboardKPIs />} />
-
-      {/* ✅ Nova rota do painel figital */}
       <Route path="/figital" element={<NoaEsperanzaPage />} />
+
+      {/* ✅ Nova rota conectada com backend Render */}
+      <Route path="/chat" element={<Chat />} />
     </Routes>
   );
 }
