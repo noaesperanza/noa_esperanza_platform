@@ -12,7 +12,8 @@ from dotenv import load_dotenv
 from logs import router as logs_router
 from documentos import router as documentos_router
 from kpis import router as kpi_router
-from logs import salvar_log  # Função de logging GPT
+from chat import router as chat_router  # Adiciona o router de /api/chat
+from logs import salvar_log  # Função para salvar os logs GPT
 
 # Carrega variáveis do .env
 load_dotenv()
@@ -29,14 +30,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Variáveis de ambiente
+# Variáveis de ambiente (validadas)
 DB_NAME = os.getenv("DB_NAME")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_HOST = os.getenv("DB_HOST")
 DB_PORT = os.getenv("DB_PORT")
-GPT_MODEL = os.getenv("GPT_AVALIACAO_MODEL")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+GPT_MODEL = os.getenv("GPT_AVALIACAO_MODEL")  # Pode ser ajustado no backend
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")  # ⚠️ Apontando corretamente
+
 openai.api_key = OPENAI_API_KEY
 
 # Criação de tabelas ao iniciar o app
@@ -97,52 +99,7 @@ def criar_tabelas():
     cur.close()
     conn.close()
 
-# Estrutura da requisição
-class EntradaChat(BaseModel):
-    user_id: str
-    mensagem: str
-
-# Endpoint principal da conversa com a Nôa
-@app.post("/api/chat/")
-def conversar(dados: EntradaChat):
-    try:
-        resposta = openai.ChatCompletion.create(
-            model=GPT_MODEL,
-            messages=[{"role": "user", "content": dados.mensagem}]
-        )
-        conteudo = resposta['choices'][0]['message']['content']
-
-        conn = psycopg2.connect(
-            dbname=DB_NAME,
-            user=DB_USER,
-            password=DB_PASSWORD,
-            host=DB_HOST,
-            port=DB_PORT,
-            options='-c client_encoding=UTF8'
-        )
-        cur = conn.cursor()
-        cur.execute("""
-            INSERT INTO public.conversas_noa (user_id, mensagem, resposta, criado_em)
-            VALUES (%s, %s, %s, %s)
-        """, (dados.user_id, dados.mensagem, conteudo, datetime.utcnow()))
-        conn.commit()
-        cur.close()
-        conn.close()
-
-        salvar_log(
-            endpoint="/api/chat/",
-            user_id=dados.user_id,
-            mensagem=dados.mensagem,
-            resposta=conteudo,
-            status_code=200
-        )
-
-        return {"resposta": conteudo}
-
-    except Exception as e:
-        return {"erro": str(e)}
-
-# Define domínio externo para o GPT Builder
+# Personalização da documentação para apontar para o domínio da API no Render
 def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
@@ -153,14 +110,16 @@ def custom_openapi():
         routes=app.routes,
     )
     openapi_schema["servers"] = [
-        {"url": "https://4b0e-2804-18-4849-d67c-c0a6-2e74-3cfe-3983.ngrok-free.app"}
+        {"url": "https://plataforma-noa-backend.onrender.com"}  # Dominio final da API
     ]
     app.openapi_schema = openapi_schema
     return app.openapi_schema
 
 app.openapi = custom_openapi
 
-# Inclui os routers externos
+# Inclui todos os routers
 app.include_router(logs_router)
 app.include_router(documentos_router)
 app.include_router(kpi_router)
+app.include_router(chat_router)  # Rota de /api/chat para vc (builder)
+
