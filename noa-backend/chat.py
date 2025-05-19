@@ -1,80 +1,47 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
-import openai
+import httpx
 import os
-from datetime import datetime
-from logs import salvar_log  # Certifique-se de que essa função existe
+from logs import salvar_log
 
 router = APIRouter()
 
-# Configurações de ambiente
-GPT_MODEL = os.getenv("GPT_AVALIACAO_MODEL", "gpt-4")
-openai.api_key = os.getenv("OPENAI_API_KEY")
+GPT_BUILDER_URL = os.getenv("GPT_BUILDER_URL")
 
 @router.post("/api/chat")
 async def redirecionar_para_noa_esperanza(request: Request):
     try:
         body = await request.json()
-        mensagem_usuario = body.get("mensagem", "")
+        mensagem = body.get("mensagem", "")
         user_id = body.get("user_id", "anonimo")
 
-        if not mensagem_usuario:
+        if not mensagem:
             return JSONResponse(
                 status_code=422,
                 content={"erro": "Campo 'mensagem' ausente no corpo da requisição."}
             )
 
-        resposta = openai.ChatCompletion.create(
-            model=GPT_MODEL,
-            messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "Você é Nôa Esperanza, assistente simbólica da Plataforma desenvolvida por Dr. Ricardo Valença. "
-                        "Atue como no GPT publicado em: https://chatgpt.com/g/g-67f5972a13dc819189aba71dfb3c1b99-noa-esperanza-curadoria-e-desenvolvimento. "
-                        "Responda com profissionalismo, clareza técnica e vínculo ético com o usuário. "
-                        "A conversa deve ser simbólica, técnica e cuidadosa."
-                    )
-                },
-                {"role": "user", "content": mensagem_usuario}
-            ],
-            temperature=0.7
-        )
+        async with httpx.AsyncClient() as client:
+            resposta = await client.post(
+                GPT_BUILDER_URL,
+                json={"user_id": user_id, "mensagem": mensagem},
+                timeout=30
+            )
 
-        conteudo = resposta.choices[0].message["content"]
+        conteudo = resposta.json().get("resposta", "[resposta vazia]")
 
         await salvar_log(
             endpoint="/api/chat",
             user_id=user_id,
-            mensagem=mensagem_usuario,
+            mensagem=mensagem,
             resposta=conteudo,
-            status_code=200
+            status_code=resposta.status_code
         )
 
         return {"resposta": conteudo}
 
-    except openai.error.OpenAIError as e:
-        await salvar_log(
-            endpoint="/api/chat",
-            user_id=user_id,
-            mensagem=mensagem_usuario,
-            resposta=str(e),
-            status_code=500
-        )
-        return JSONResponse(
-            status_code=500,
-            content={"erro": f"Erro na OpenAI: {str(e)}"}
-        )
-
     except Exception as e:
-        await salvar_log(
-            endpoint="/api/chat",
-            user_id=user_id,
-            mensagem=mensagem_usuario,
-            resposta=str(e),
-            status_code=500
-        )
         return JSONResponse(
             status_code=500,
-            content={"erro": f"Erro inesperado: {str(e)}"}
+            content={"erro": f"Erro ao redirecionar: {str(e)}"}
         )
