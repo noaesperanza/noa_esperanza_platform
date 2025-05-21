@@ -4,23 +4,35 @@ from fastapi.responses import JSONResponse
 from fastapi.openapi.utils import get_openapi
 import os
 
+# Rotas personalizadas
+from backend import nft_emissao
+from backend import verificar_nft
+from backend import verificar_nft_onchain
+from backend import refazer_etapa  # ← Rota de reemissão NFT
+
 app = FastAPI()
 
-# Middleware CORS
+# Inclui os roteadores
+app.include_router(nft_emissao.router)
+app.include_router(verificar_nft.router)
+app.include_router(verificar_nft_onchain.router)
+app.include_router(refazer_etapa.router)
+
+# Middleware CORS para liberar requisições do frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # Pode especificar domínios
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Rota simples para teste
+# Rota simples de verificação
 @app.get("/status")
 def obter_status():
     return {"status": "API da Nôa online"}
 
-# Rota principal para conversa
+# 🧠 Rota principal de conversação com Nôa (GPT Builder)
 @app.post("/api/chat")
 async def conversar_com_noa(request: Request):
     try:
@@ -31,23 +43,22 @@ async def conversar_com_noa(request: Request):
         if not mensagem:
             return JSONResponse(status_code=422, content={"erro": "mensagem ausente"})
 
-        # Aqui é onde o GPT Builder intercepta e responde, não o OpenAI direto
-        resposta_simulada = f"[Simulado] Nôa responde a '{mensagem}' para o usuário {user_id}."
+        # Simulação de resposta da Nôa (substituir por chamada real futura)
+        resposta_simulada = f"🌱 Olá, {user_id}. Você disse: '{mensagem}'"
 
-        return {"resposta": resposta_simulada}
+        return JSONResponse(content={"resposta": resposta_simulada})
 
     except Exception as e:
-        return JSONResponse(status_code=500, content={"erro": f"Erro: {str(e)}"})
+        return JSONResponse(status_code=500, content={"erro": f"Erro interno: {str(e)}"})
 
-# Customiza OpenAPI para exibir /api/chat no Swagger
-
+# Customização do OpenAPI
 def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
     openapi_schema = get_openapi(
         title="Nôa Esperanza API",
         version="1.0.0",
-        description="Rota unificada para integração via GPT Builder.",
+        description="Rota unificada para integração via GPT Builder, emissão e reemissão de NFTs clínicos.",
         routes=app.routes,
     )
     openapi_schema["servers"] = [
