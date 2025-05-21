@@ -2,13 +2,12 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 import httpx
 import os
-from logs import salvar_log
 
 router = APIRouter()
 
 GPT_BUILDER_URL = os.getenv("GPT_BUILDER_URL")
 
-@router.post("/api/chat")
+@router.post("/chat")
 async def redirecionar_para_noa_esperanza(request: Request):
     try:
         body = await request.json()
@@ -29,14 +28,6 @@ async def redirecionar_para_noa_esperanza(request: Request):
             )
 
         conteudo = resposta.json().get("resposta", "[resposta vazia]")
-
-        await salvar_log(
-            endpoint="/api/chat",
-            user_id=user_id,
-            mensagem=mensagem,
-            resposta=conteudo,
-            status_code=resposta.status_code
-        )
 
         return {"resposta": conteudo}
 

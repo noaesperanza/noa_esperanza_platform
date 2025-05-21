@@ -4,10 +4,8 @@ services:
     env: python
     plan: free
     region: oregon
-    buildCommand: |
-      cd noa-frontend/noa-backend && pip install -r requirements.txt
-    startCommand: |
-      cd noa-frontend/noa-backend && uvicorn main:app --host 0.0.0.0 --port 10000
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port 10000
     envVars:
       - key: PG_DB
         value: oauth-para-noa-esperanza

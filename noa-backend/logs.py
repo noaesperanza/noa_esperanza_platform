@@ -31,11 +31,11 @@ def salvar_log(endpoint: str, user_id: str, mensagem: str, resposta: str, status
             options='-c client_encoding=UTF8'
         )
         cur = conn.cursor()
-        cur.execute("""
+        cur.execute(\"""
             INSERT INTO public.logs_gpt (
                 endpoint, user_id, mensagem, resposta, status_code, criado_em
             ) VALUES (%s, %s, %s, %s, %s, %s)
-        """, (endpoint, user_id, mensagem, resposta, status_code, datetime.utcnow()))
+        \""", (endpoint, user_id, mensagem, resposta, status_code, datetime.utcnow()))
         conn.commit()
         cur.close()
         print(f"[LOG ✅] {endpoint} | {user_id} | status {status_code}")
@@ -58,12 +58,12 @@ def listar_logs():
             options='-c client_encoding=UTF8'
         )
         cur = conn.cursor()
-        cur.execute("""
+        cur.execute(\"""
             SELECT id, endpoint, user_id, mensagem, resposta, status_code, criado_em
             FROM public.logs_gpt
             ORDER BY criado_em DESC
             LIMIT 100;
-        """)
+        \""")
         colunas = [desc[0] for desc in cur.description]
         dados = [dict(zip(colunas, linha)) for linha in cur.fetchall()]
         cur.close()

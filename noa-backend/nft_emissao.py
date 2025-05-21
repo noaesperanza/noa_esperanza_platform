@@ -3,7 +3,6 @@ from pydantic import BaseModel
 from database.connect_postgres import connect
 from backend.zora_integration import emitir_nft_zora
 import datetime
-import uuid
 
 router = APIRouter()
 
@@ -27,10 +26,10 @@ def emitir_nft(req: NFTRequest):
     conn = connect()
     cur = conn.cursor()
     cur.execute(
-        """
+        '''
         INSERT INTO nfts_emitidos (aluno_id, etapa, criterio_avaliacao, comparacao_json, resultado, hash_zora, data_emissao)
         VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """,
+        ''',
         (
             req.aluno_id,
             req.etapa,

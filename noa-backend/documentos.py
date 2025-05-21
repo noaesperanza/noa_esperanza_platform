@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, Form
+from fastapi import APIRouter, UploadFile, File, Form 
 from fastapi.responses import JSONResponse
 from datetime import datetime
 import shutil, os, uuid, psycopg2
@@ -19,7 +19,7 @@ DB_PORT = os.getenv("DB_PORT")
 UPLOAD_DIR = "/mnt/data/documentos"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-@router.post("/api/upload-documento/")
+@router.post("/upload-documento/")
 def upload_documento(
     user_id: str = Form(...),
     titulo: str = Form(...),
