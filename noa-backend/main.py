@@ -5,14 +5,14 @@ from pydantic import BaseModel
 import openai
 import os
 
-# Configure sua chave da OpenAI via variável de ambiente
+# Configuração da chave de API
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # Substitua por domínio específico do Vercel se desejar
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -34,8 +34,14 @@ async def conversar_com_noa(payload: MensagemRequest):
             user=payload.user_id
         )
 
-        resposta_gpt = response.choices[0].message.content.strip()
+        resposta_gpt = response['choices'][0]['message']['content'].strip()
         return {"resposta": resposta_gpt}
 
     except Exception as e:
         return JSONResponse(status_code=500, content={"erro": f"Erro ao conectar com GPT: {str(e)}"})
+
+
+# Execução local
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
