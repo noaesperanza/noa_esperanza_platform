@@ -8,10 +8,14 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
 export default defineConfig({
+  base: '/', // ESSENCIAL para rotas SPA no Vercel
   plugins: [react()],
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
     },
+  },
+  build: {
+    outDir: 'dist',
   },
 })
