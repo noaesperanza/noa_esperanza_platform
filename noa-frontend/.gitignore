@@ -107,3 +107,5 @@ now.json
 *.old
 *.tmp.*
 *~ 
+
+.vercel

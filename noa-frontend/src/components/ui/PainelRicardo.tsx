@@ -1,7 +1,6 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
-import PainelDocumentos from './PainelDocumentos.tsx';
-
+import PainelDocumentos from './PainelDocumentos';
 
 export default function PainelRicardo(): React.JSX.Element {
   const [mensagem, setMensagem] = useState<string>('');

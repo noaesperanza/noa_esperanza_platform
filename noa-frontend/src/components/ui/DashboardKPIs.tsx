@@ -1,5 +1,3 @@
-// src/components/ui/DashboardKPIs.tsx
-
 import { useEffect, useState } from "react";
 import {
   LineChart,
@@ -19,18 +17,20 @@ type LogKPI = {
   ritmo: number;
 };
 
-export default function DashboardKPIs() {
+export default function DashboardKPI() {
   const [dados, setDados] = useState<LogKPI[]>([]);
   const [erro, setErro] = useState<string | null>(null);
+  const [carregando, setCarregando] = useState<boolean>(true);
 
   useEffect(() => {
-    fetch("http://localhost:10000/api/kpis/simulacoes/")
+    fetch(`${import.meta.env.VITE_API_URL}/api/kpis/simulacoes/`)
       .then((res) => {
         if (!res.ok) throw new Error("Falha ao buscar KPIs de simulação");
         return res.json();
       })
-      .then(setDados)
-      .catch((e) => setErro("Erro ao carregar dados de KPIs: " + e.message));
+      .then((data) => setDados(data || []))
+      .catch((e) => setErro("Erro ao carregar dados de KPIs: " + e.message))
+      .finally(() => setCarregando(false));
   }, []);
 
   return (
@@ -40,37 +40,42 @@ export default function DashboardKPIs() {
       </h2>
 
       {erro && <p className="text-red-500 text-center mb-4">{erro}</p>}
+      {carregando && (
+        <p className="text-center text-gray-500">⏳ Carregando KPIs...</p>
+      )}
 
-      <ResponsiveContainer width="100%" height={320}>
-        <LineChart data={dados}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="id_simulacao" />
-          <YAxis />
-          <Tooltip />
-          <Legend />
-          <Line
-            type="monotone"
-            dataKey="tempo_resposta"
-            stroke="#7c3aed"
-            strokeWidth={2}
-            name="⏱ Tempo de Resposta"
-          />
-          <Line
-            type="monotone"
-            dataKey="coerencia"
-            stroke="#10b981"
-            strokeWidth={2}
-            name="🧠 Coerência"
-          />
-          <Line
-            type="monotone"
-            dataKey="ritmo"
-            stroke="#f59e0b"
-            strokeWidth={2}
-            name="🎵 Ritmo"
-          />
-        </LineChart>
-      </ResponsiveContainer>
+      {!carregando && dados.length > 0 && (
+        <ResponsiveContainer width="100%" height={320}>
+          <LineChart data={dados}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="id_simulacao" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Line
+              type="monotone"
+              dataKey="tempo_resposta"
+              stroke="#7c3aed"
+              strokeWidth={2}
+              name="⏱ Tempo de Resposta"
+            />
+            <Line
+              type="monotone"
+              dataKey="coerencia"
+              stroke="#10b981"
+              strokeWidth={2}
+              name="🧠 Coerência"
+            />
+            <Line
+              type="monotone"
+              dataKey="ritmo"
+              stroke="#f59e0b"
+              strokeWidth={2}
+              name="🎵 Ritmo"
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      )}
     </div>
   );
 }

@@ -11,7 +11,7 @@ export default function NoaChat() {
     setResposta('');
 
     try {
-      const resposta = await fetch(`${import.meta.env.VITE_API_URL}/api/chat`, {
+      const respostaServidor = await fetch(`https://plataforma-noa-backend.onrender.com/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -20,7 +20,7 @@ export default function NoaChat() {
         }),
       });
 
-      const dados = await resposta.json();
+      const dados = await respostaServidor.json();
       if (dados?.resposta) {
         setResposta(dados.resposta);
       } else {
