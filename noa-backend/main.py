@@ -47,6 +47,17 @@ async def conversar_com_noa(payload: MensagemRequest):
                 )
             }
         elif payload.user_id == "iaianoaesperanza@gmail.com":
+            if "registrar no banco o novo evento clínico" in payload.mensagem.lower():
+                return {
+                    "resposta": (
+                        "Perfeito. Para registrar um evento clínico, por favor informe:\n"
+                        "- user_id real do paciente\n"
+                        "- descrição do evento clínico\n"
+                        "- data e hora (opcional)\n\n"
+                        "Pode me enviar esses dados agora?"
+                    )
+                }
+
             return {
                 "resposta": (
                     "Olá, Dr. Ricardo. Acesso administrativo liberado.\n\n"
