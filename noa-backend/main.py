@@ -4,21 +4,21 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import openai
 import psycopg2
-import os
 from dotenv import load_dotenv
+import os
+from datetime import datetime
 
-# Carregar variáveis de ambiente
-load_dotenv()
+load_dotenv(dotenv_path="C:/Escute-se/Plataforma_Noa_Esperanza_2.0/adk.env")
 
-# Chave da API OpenAI
-openai.api_key = os.getenv("OPENAI_API_KEY")
+openai_api_key = os.getenv("OPENAI_API_KEY")
+openai.api_key = openai_api_key
 
 app = FastAPI()
 
 # Liberação de CORS para frontend (Vercel ou localhost)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Em produção, use domínio específico
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -29,10 +29,31 @@ class MensagemRequest(BaseModel):
     user_id: str
     mensagem: str
 
+# Modelo de comando administrativo
+class ComandoAdminRequest(BaseModel):
+    user_id: str
+    comando: str
+
 # Endpoint de conversa com Nôa (GPT)
 @app.post("/api/chat")
 async def conversar_com_noa(payload: MensagemRequest):
     try:
+        if payload.user_id == "bozza.fernando@gmail.com":
+            return {
+                "resposta": (
+                    "Olá, Dr. Fernando. Você acaba de entrar na instância da plataforma Nôa Esperanza vinculada à nossa organização oficial.\n\n"
+                    "📘 Seu documento de apresentação está pronto e disponível na lousa digital.\n\n"
+                    "Deseja visualizá-lo agora?"
+                )
+            }
+        elif payload.user_id == "iaianoaesperanza@gmail.com":
+            return {
+                "resposta": (
+                    "Olá, Dr. Ricardo. Acesso administrativo liberado.\n\n"
+                    "Deseja revisar o banco de dados, iniciar triagens ou autorizar novos profissionais?"
+                )
+            }
+
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
@@ -43,8 +64,18 @@ async def conversar_com_noa(payload: MensagemRequest):
         )
         resposta_gpt = response['choices'][0]['message']['content'].strip()
         return {"resposta": resposta_gpt}
+
     except Exception as e:
         return JSONResponse(status_code=500, content={"erro": f"Erro ao conectar com GPT: {str(e)}"})
+
+# Endpoint de comando administrativo
+@app.post("/api/admin/comando")
+async def executar_comando_admin(payload: ComandoAdminRequest):
+    return JSONResponse(content={
+        "mensagem": f"Comando '{payload.comando}' executado com sucesso.",
+        "executado_por": payload.user_id,
+        "timestamp": datetime.now().isoformat()
+    })
 
 # Endpoint de teste com KPIs simulados
 @app.get("/api/kpis/barras/")
@@ -57,7 +88,7 @@ async def get_kpis_barras():
     ]
     return JSONResponse(content=dados)
 
-# Novo endpoint: entrevistas clínicas reais do banco noa_db
+# Endpoint: entrevistas clínicas reais do banco noa_db
 @app.get("/entrevistas")
 async def get_entrevistas():
     try:
